@@ -1,5 +1,5 @@
 #include <intrins.h>
-#include "reg52.h"
+#include "STC15F2K60S2.h"
 #include "main.h"
 #include "mfrc522.h"
 #include <string.h> 
@@ -22,22 +22,15 @@ char PcdRequest(unsigned char req_code,unsigned char *pTagType)
    char status;  
    unsigned int  unLen;
    unsigned char ucComMF522Buf[MAXRLEN]; 
-//  unsigned char xTest ;
+
    ClearBitMask(Status2Reg,0x08);
    WriteRawRC(BitFramingReg,0x07);
 
-//  xTest = ReadRawRC(BitFramingReg);
-//  if(xTest == 0x07 )
- //   { LED_GREEN  =0 ;}
- // else {LED_GREEN =1 ;while(1){}}
    SetBitMask(TxControlReg,0x03);
  
    ucComMF522Buf[0] = req_code;
 
    status = PcdComMF522(PCD_TRANSCEIVE,ucComMF522Buf,1,ucComMF522Buf,&unLen);
-//     if(status  == MI_OK )
-//   { LED_GREEN  =0 ;}
-//   else {LED_GREEN =1 ;}
    if ((status == MI_OK) && (unLen == 0x10))
    {    
        *pTagType     = ucComMF522Buf[0];
@@ -142,8 +135,6 @@ char PcdAuthState(unsigned char auth_mode,unsigned char addr,unsigned char *pKey
     {    ucComMF522Buf[i+2] = *(pKey+i);   }
     for (i=0; i<6; i++)
     {    ucComMF522Buf[i+8] = *(pSnr+i);   }
- //   memcpy(&ucComMF522Buf[2], pKey, 6); 
- //   memcpy(&ucComMF522Buf[8], pSnr, 4); 
     
     status = PcdComMF522(PCD_AUTHENT,ucComMF522Buf,12,ucComMF522Buf,&unLen);
     if ((status != MI_OK) || (!(ReadRawRC(Status2Reg) & 0x08)))
@@ -170,7 +161,6 @@ char PcdRead(unsigned char addr,unsigned char *pData)
    
     status = PcdComMF522(PCD_TRANSCEIVE,ucComMF522Buf,4,ucComMF522Buf,&unLen);
     if ((status == MI_OK) && (unLen == 0x90))
- //   {   memcpy(pData, ucComMF522Buf, 16);   }
     {
         for (i=0; i<16; i++)
         {    *(pData+i) = ucComMF522Buf[i];   }
@@ -204,7 +194,6 @@ char PcdWrite(unsigned char addr,unsigned char *pData)
         
     if (status == MI_OK)
     {
-        //memcpy(ucComMF522Buf, pData, 16);
         for (i=0; i<16; i++)
         {    ucComMF522Buf[i] = *(pData+i);   }
         CalulateCRC(ucComMF522Buf,16,&ucComMF522Buf[16]);
@@ -292,42 +281,14 @@ char M500PcdConfigISOType(unsigned char type)
    if (type == 'A')                     //ISO14443_A
    { 
        ClearBitMask(Status2Reg,0x08);
-
- /*     WriteRawRC(CommandReg,0x20);    //as default   
-       WriteRawRC(ComIEnReg,0x80);     //as default
-       WriteRawRC(DivlEnReg,0x0);      //as default
-	   WriteRawRC(ComIrqReg,0x04);     //as default
-	   WriteRawRC(DivIrqReg,0x0);      //as default
-	   WriteRawRC(Status2Reg,0x0);//80    //trun off temperature sensor
-	   WriteRawRC(WaterLevelReg,0x08); //as default
-       WriteRawRC(ControlReg,0x20);    //as default
-	   WriteRawRC(CollReg,0x80);    //as default
-*/
        WriteRawRC(ModeReg,0x3D);//3F
-/*	   WriteRawRC(TxModeReg,0x0);      //as default???
-	   WriteRawRC(RxModeReg,0x0);      //as default???
-	   WriteRawRC(TxControlReg,0x80);  //as default???
-
-	   WriteRawRC(TxSelReg,0x10);      //as default???
-   */
        WriteRawRC(RxSelReg,0x86);//84
- //      WriteRawRC(RxThresholdReg,0x84);//as default
- //      WriteRawRC(DemodReg,0x4D);      //as default
-
- //      WriteRawRC(ModWidthReg,0x13);//26
        WriteRawRC(RFCfgReg,0x7F);   //4F
-	/*   WriteRawRC(GsNReg,0x88);        //as default???
-	   WriteRawRC(CWGsCfgReg,0x20);    //as default???
-       WriteRawRC(ModGsCfgReg,0x20);   //as default???
-*/
    	   WriteRawRC(TReloadRegL,30);//tmoLength);// TReloadVal = 'h6a =tmoLength(dec) 
-	   WriteRawRC(TReloadRegH,0);
+	     WriteRawRC(TReloadRegH,0);
        WriteRawRC(TModeReg,0x8D);
-	   WriteRawRC(TPrescalerReg,0x3E);
-	   
-
-  //     PcdSetTmo(106);
-	    		delay_10ms(1);
+	     WriteRawRC(TPrescalerReg,0x3E);
+	     delay_10ms(1);
        PcdAntennaOn();
    }
    else{ return -1; }
@@ -568,8 +529,6 @@ char PcdValue(unsigned char dd_mode,unsigned char addr,unsigned char *pValue)
     if (status == MI_OK)
     {
         memcpy(ucComMF522Buf, pValue, 4);
- //       for (i=0; i<16; i++)
- //       {    ucComMF522Buf[i] = *(pValue+i);   }
         CalulateCRC(ucComMF522Buf,4,&ucComMF522Buf[4]);
         unLen = 0;
         status = PcdComMF522(PCD_TRANSCEIVE,ucComMF522Buf,6,ucComMF522Buf,&unLen);
@@ -647,7 +606,7 @@ char PcdBakValue(unsigned char sourceaddr, unsigned char goaladdr)
 ///////////////////////////////////////////////////////////////////////
 void delay_10ms(unsigned int _10ms)
 {
-#ifndef NO_TIMER2
+	#ifndef NO_TIMER2
     RCAP2LH = RCAP2_10ms;
     T2LH    = RCAP2_10ms;
     
@@ -658,7 +617,7 @@ void delay_10ms(unsigned int _10ms)
 	    TF2 = FALSE;
     }
     TR2 = FALSE;
-#else
+	#else
     while (_10ms--)
     {
 	    delay_50us(19);
